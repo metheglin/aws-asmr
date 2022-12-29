@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.email        = "pigmybank@gmail.com"
   s.files        = Dir["{lib}/**/*.rb", "bin/*", "LICENSE", "*.md"]
   s.homepage     = "https://rubygems.org/gems/aws-asmr"
-  s.executables  = %w(aws-asmr asmr)
+  s.executables  = %w(asmr)
   s.require_path = 'lib'
   s.license      = "MIT"
 
