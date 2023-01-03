@@ -2,36 +2,49 @@
 
 require "tty-prompt"
 require "aws/asmr"
+require "aws/asmr/options"
 
-case(ARGV[0])
-when 'clear'
-  Aws::ASMR::Cache.destroy!
-  exit(0)
-when 'version'
+asmr_args, command_args = Aws::ASMR::Options.partition(ARGV)
+options = Aws::ASMR::Options.parse(asmr_args)
+
+if options[:version]
   require "aws/asmr/version"
   puts Aws::ASMR::VERSION
   exit(0)
-end
-
-name = ARGV[0]
-assume_role_arn = Aws::ASMR::Alias.get(name)&.arn || name
-
-def run(shell_variables=[])
-  subcommand = ARGV[1..-1]
-  if subcommand.empty?
-    exec("echo \"#{shell_variables.join($/)}\"")
-  else
-    exec([*shell_variables, *subcommand].join(' '))
-  end
-end 
-
-subcommand = ARGV[1..-1]
-
-if cache = Aws::ASMR::Cache.get(assume_role_arn)
-  run(cache.shell_variables)
+elsif options[:clear]
+  Aws::ASMR::Cache.destroy!
+  exit(0)
+else
 end
 
 prompt = TTY::Prompt.new
+
+name = if options[:name]
+  options[:name]
+else
+  alias_keys = Aws::ASMR::Alias.base.keys
+  prompt.select("Choose a role you're going to assume:", alias_keys)
+end
+asmr_alias = Aws::ASMR::Alias.get(name)
+assume_role_arn = if asmr_alias
+  asmr_alias.set_environment_variables!
+  asmr_alias.arn
+else
+  name
+end
+
+def run(command, shell_variables=[])
+  if command.empty?
+    exec("echo \"#{shell_variables.join($/)}\"")
+  else
+    exec([*shell_variables, *command].join(' '))
+  end
+end 
+
+if cache = Aws::ASMR::Cache.get(assume_role_arn)
+  run(command_args, cache.shell_variables)
+end
+
 
 begin
   serial_number = Aws::ASMR.detect_mfa_device_serial_number
@@ -45,7 +58,7 @@ begin
   res = Aws::ASMR.assume_role(assume_role_arn, **assume_role_args)
   cache = Aws::ASMR::Cache.new(**res.credentials.to_h)
   cache.save!(assume_role_arn)
-  run(cache.shell_variables)
+  run(command_args, cache.shell_variables)
 rescue => e
   STDERR.puts e.message
   exit(1)

@@ -3,7 +3,7 @@ require 'aws/asmr'
 
 module Aws
   module ASMR
-    class Alias < Struct.new(:arn, keyword_init: true)
+    class Alias < Struct.new(:arn, :access_key_id, :secret_access_key, :profile, keyword_init: true)
 
       PATH = "#{Aws::ASMR::ROOT}/alias"
 
@@ -25,7 +25,7 @@ module Aws
             end
             acc
           end
-          arr.map{|k,v| [k,v.to_h]}.to_h
+          arr.map{|k,v| [k,v.to_h]}.select{|k,v| v["arn"] and !v["arn"].empty?}.to_h
         end
 
         def base
@@ -45,6 +45,15 @@ module Aws
 
         def get(alias_name)
           base[alias_name] && new(base[alias_name])
+        end
+      end
+
+      def set_environment_variables!
+        if access_key_id and !access_key_id.empty?
+          ENV["AWS_ACCESS_KEY_ID"] = access_key_id
+          ENV["AWS_SECRET_ACCESS_KEY"] = secret_access_key
+        elsif profile and !profile.empty?
+          ENV["AWS_PROFILE"] = profile
         end
       end
     end
