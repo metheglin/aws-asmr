@@ -1,4 +1,5 @@
 require "optparse"
+require "aws/asmr"
 
 module Aws::ASMR
   module Options
@@ -20,9 +21,9 @@ module Aws::ASMR
       OptionParser.new do |opts|
         # opts.banner = "Usage: asmr [options]"
         opts.banner = <<~EOS
-          Usage: asmr [options] [command] [arg...]
-          
+          You can use ALIAS to shortcut name input by setting it at #{Aws::ASMR::ROOT}/alias
 
+          Usage: asmr [options] [command] [arg...]
         EOS
 
         opts.on("-nNAME", "--name=NAME", "Name to perform assume role with ARN or ALIAS") do |name|

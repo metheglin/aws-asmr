@@ -37,6 +37,20 @@ def run(command, shell_variables=[])
   if command.empty?
     exec("echo \"#{shell_variables.join($/)}\"")
   else
+    command = if command.length == 1
+      # Ex: asmr "aws sts get-caller-identity | grep Arn"
+      command
+    else
+      # Ex: asmr aws ec2 describe-instances --filter '[{"Name":"instance-state-name","Values":["stopped"]}]'
+      command.map{|plain|
+        if plain.match?(/[\"\'\ ]/)
+          quoted = plain.gsub("'"){"\\'"}
+          "'#{quoted}'"
+        else
+          plain
+        end
+      }
+    end
     exec([*shell_variables, *command].join(' '))
   end
 end 
