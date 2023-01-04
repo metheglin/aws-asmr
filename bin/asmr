@@ -23,6 +23,10 @@ name = if options[:name]
   options[:name]
 else
   alias_keys = Aws::ASMR::Alias.base.keys
+  if alias_keys.empty?
+    STDERR.puts "Please specify --name=ARN to assume_role or make alias at #{Aws::ASMR::ROOT}/alias"
+    exit(1)
+  end
   prompt.select("Choose a role you're going to assume:", alias_keys)
 end
 asmr_alias = Aws::ASMR::Alias.get(name)

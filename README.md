@@ -30,7 +30,7 @@ If active *MFA* device detected on the IAM account(`custodian`), it'll prompt `M
 
 Regardless that MFA is enabled or not, temporary credentials `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SECRET_TOKEN` are set in the current command when assume_role was successful, without `export` environment variables.  
 In the case below, you'll run a command like `AWS_ACCESS_KEY_ID=xxxx AWS_SECRET_ACCESS_KEY=yyyy AWS_SECRET_TOKEN=zzzz aws sts get-caller-identity`  
-This means those variables are only effective for the subsequential command(`aws sts get-caller-identity`). So this is safe and you can run commands idempotently (If you export those environment variables, the same command for assume_role would never be successful in the same shell session).
+This means those variables are only effective for the subsequential command(`aws sts get-caller-identity`). So it is safe and you can run commands idempotently (If you export those environment variables, the same command for assume_role would never be successful in the same shell session).
 
 ```
 AWS_PROFILE=custodian asmr --name=arn:aws:iam::0000:role/AwesomeRole aws sts get-caller-identity
