@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 
-require "tty-prompt"
 require "aws/asmr"
 require "aws/asmr/options"
+require "aws/asmr/prompt"
 
 asmr_args, command_args = Aws::ASMR::Options.partition(ARGV)
 options = Aws::ASMR::Options.parse(asmr_args)
@@ -17,7 +17,7 @@ elsif options[:clear]
 else
 end
 
-prompt = TTY::Prompt.new
+prompt = Aws::ASMR::Prompt.safe
 
 name = if options[:name]
   options[:name]
