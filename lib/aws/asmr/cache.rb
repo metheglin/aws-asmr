@@ -10,7 +10,7 @@ module Aws
       class << self
         def base
           @base ||= begin
-            if File.exists?(PATH)
+            if File.exist?(PATH)
               JSON.parse(File.read(PATH))
             else
               {}
@@ -30,7 +30,7 @@ module Aws
         end
 
         def destroy!
-          File.exists?(PATH) && File.delete(PATH)
+          File.exist?(PATH) && File.delete(PATH)
         end
       end
 

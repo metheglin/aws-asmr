@@ -30,7 +30,7 @@ module Aws
 
         def base
           @base ||= begin
-            if File.exists?(PATH)
+            if File.exist?(PATH)
               parse(File.readlines(PATH))
             else
               {}
