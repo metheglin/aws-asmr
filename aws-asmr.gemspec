@@ -16,7 +16,7 @@ Gem::Specification.new do |s|
   s.license      = "MIT"
 
   s.required_ruby_version = ">= 2.7"
-  # s.add_dependency "rake", "~> 13.0"
+  s.add_dependency "rake", "~> 13.0"
   s.add_dependency "tty-prompt", '~> 0.0'
   s.add_dependency "aws-sdk-sts", '~> 1.0'
   s.add_dependency "aws-sdk-iam", '~> 1.0'
