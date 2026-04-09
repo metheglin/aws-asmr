@@ -37,6 +37,9 @@ module Aws::ASMR
         opts.on("--version", "Prints version") do
           options[:version] = true
         end
+        opts.on("--verbose", "Prints verbose") do
+          options[:verbose] = true
+        end
         opts.on("--clear", "Clear cache") do
           options[:clear] = true
           # require "aws/asmr/version"

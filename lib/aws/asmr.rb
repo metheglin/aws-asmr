@@ -24,6 +24,8 @@ module Aws
       iam_client = Aws::IAM::Client.new(region: 'us-east-1')
       res = iam_client.list_mfa_devices
       res.mfa_devices.detect(&:serial_number)&.serial_number
+    rescue Aws::IAM::Errors::AccessDenied => e
+      nil
     end
 
     module_function :assume_role, :detect_mfa_device_serial_number
