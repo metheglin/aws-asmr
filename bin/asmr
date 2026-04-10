@@ -66,11 +66,12 @@ end
 
 begin
   serial_number = Aws::ASMR.detect_mfa_device_serial_number
+  assume_role_args = asmr_alias ? asmr_alias.assume_role_args : {}
   assume_role_args = if serial_number
     token_code = prompt.ask("Type MFA token code:")
-    {serial_number: serial_number, token_code: token_code}
+    assume_role_args.merge({serial_number: serial_number, token_code: token_code})
   else
-    {}
+    assume_role_args
   end
 
   res = Aws::ASMR.assume_role(assume_role_arn, **assume_role_args)

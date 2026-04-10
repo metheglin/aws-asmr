@@ -3,7 +3,7 @@ require 'aws/asmr'
 
 module Aws
   module ASMR
-    class Alias < Struct.new(:arn, :access_key_id, :secret_access_key, :profile, keyword_init: true)
+    class Alias < Struct.new(:arn, :access_key_id, :secret_access_key, :profile, :external_id, :role_session_name, keyword_init: true)
 
       PATH = "#{Aws::ASMR::ROOT}/alias"
 
@@ -55,6 +55,10 @@ module Aws
         elsif profile and !profile.empty?
           ENV["AWS_PROFILE"] = profile
         end
+      end
+
+      def assume_role_args
+        {external_id: external_id, role_session_name: role_session_name}.compact
       end
     end
   end
