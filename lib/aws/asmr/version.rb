@@ -1,5 +1,5 @@
 module Aws
   module ASMR
-    VERSION = "0.0.4"
+    VERSION = "0.0.5"
   end
 end
