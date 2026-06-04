@@ -3,7 +3,7 @@ require 'aws/asmr'
 
 module Aws
   module ASMR
-    class Alias < Struct.new(:arn, :access_key_id, :secret_access_key, :profile, :external_id, :role_session_name, keyword_init: true)
+    class Alias < Struct.new(:arn, :access_key_id, :secret_access_key, :profile, :external_id, :role_session_name, :region, :session_duration, keyword_init: true)
 
       PATH = "#{Aws::ASMR::ROOT}/alias"
 

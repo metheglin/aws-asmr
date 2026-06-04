@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+require "aws/asmr/cli"
+
+# Session duration is read from the alias only (a raw, possibly empty string).
+# Returns nil to let WebLogin fall back to its default.
+def alias_session_duration(asmr_alias)
+  raw = asmr_alias&.session_duration
+  raw.to_i if raw && !raw.empty?
+end
+
+Aws::ASMR::CLI.main(ARGV) do |cache, _command_args, _options, asmr_alias|
+  args = { region: asmr_alias&.region }
+  duration = alias_session_duration(asmr_alias)
+  args[:session_duration] = duration if duration
+  url = Aws::ASMR::WebLogin.signin_url(cache, **args)
+  Aws::ASMR::WebLogin.open_browser(url)
+end

@@ -1,41 +1,6 @@
 #!/usr/bin/env ruby
 
-require "aws/asmr"
-require "aws/asmr/options"
-require "aws/asmr/prompt"
-
-asmr_args, command_args = Aws::ASMR::Options.partition(ARGV)
-options = Aws::ASMR::Options.parse(asmr_args)
-
-if options[:version]
-  require "aws/asmr/version"
-  puts Aws::ASMR::VERSION
-  exit(0)
-elsif options[:clear]
-  Aws::ASMR::Cache.destroy!
-  exit(0)
-else
-end
-
-prompt = Aws::ASMR::Prompt.safe
-
-name = if options[:name]
-  options[:name]
-else
-  alias_keys = Aws::ASMR::Alias.base.keys
-  if alias_keys.empty?
-    STDERR.puts "Please specify --name=ARN to assume_role or make alias at #{Aws::ASMR::ROOT}/alias"
-    exit(1)
-  end
-  prompt.select("Choose a role you're going to assume:", alias_keys)
-end
-asmr_alias = Aws::ASMR::Alias.get(name)
-assume_role_arn = if asmr_alias
-  asmr_alias.set_environment_variables!
-  asmr_alias.arn
-else
-  name
-end
+require "aws/asmr/cli"
 
 def run(command, shell_variables=[])
   if command.empty?
@@ -57,33 +22,8 @@ def run(command, shell_variables=[])
     end
     exec([*shell_variables, *command].join(' '))
   end
-end 
-
-if cache = Aws::ASMR::Cache.get(assume_role_arn)
-  run(command_args, cache.shell_variables)
 end
 
-
-begin
-  serial_number = Aws::ASMR.detect_mfa_device_serial_number
-  assume_role_args = asmr_alias ? asmr_alias.assume_role_args : {}
-  assume_role_args = if serial_number
-    token_code = prompt.ask("Type MFA token code:")
-    assume_role_args.merge({serial_number: serial_number, token_code: token_code})
-  else
-    assume_role_args
-  end
-
-  res = Aws::ASMR.assume_role(assume_role_arn, **assume_role_args)
-  cache = Aws::ASMR::Cache.new(**res.credentials.to_h)
-  cache.save!(assume_role_arn)
+Aws::ASMR::CLI.main(ARGV) do |cache, command_args, _options|
   run(command_args, cache.shell_variables)
-rescue => e
-  STDERR.puts e.message
-  if options[:verbose]
-    STDERR.puts e.backtrace
-  else
-    STDERR.puts "Add --verbose for more error information."
-  end
-  exit(1)
 end
