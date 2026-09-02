@@ -58,7 +58,13 @@ module Aws
       end
 
       def assume_role_args
-        {external_id: external_id, role_session_name: role_session_name}.compact
+        {external_id: external_id, role_session_name: role_session_name, duration_seconds: duration_seconds}.compact
+      end
+
+      # session_duration as an Integer, or nil when unset. Used both as
+      # DurationSeconds of assume_role and as SessionDuration of the console.
+      def duration_seconds
+        session_duration.to_i if session_duration && !session_duration.empty?
       end
     end
   end

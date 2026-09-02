@@ -95,6 +95,39 @@ Or you can specify alias name.
 asmr --name=awesome-app-staging aws sts get-caller-identity
 ```
 
+## Pin a role to a directory (`asmr local`)
+
+Following the `rbenv local` convention, you can pin an alias (or a role ARN) to a directory. `asmr local NAME` writes the name to `.asmr` in the current directory; from then on, `asmr` and `asmr-login` run there **without `--name`** assume that role instead of asking you to choose one. The nearest `.asmr` in the current directory or any of its parents wins, so pinning a project root covers its subdirectories.
+
+```
+cd ~/src/awesome-app
+asmr local awesome-app-staging   # writes ./.asmr
+asmr aws sts get-caller-identity # assumes awesome-app-staging, no prompt
+asmr-login                       # opens the console as awesome-app-staging
+```
+
+`asmr local` refuses a name that is neither an alias defined in `~/.aws-asmr/alias` nor a role ARN, the same way rbenv refuses a version that is not installed. A pin whose alias was deleted later fails with a message pointing at the `.asmr` file.
+
+```
+asmr local            # prints the name pinned in the current directory
+asmr local --unset    # removes ./.asmr
+```
+
+`--name` always takes precedence over the pin. Note that pinning is by directory, not by shell: entering a pinned directory silently switches the role, so be careful with production aliases (checking `asmr local` before a destructive command is cheap). Like `.ruby-version`, `.asmr` is yours to commit or ignore.
+
+## Session duration
+
+The lifetime of the temporary credentials (seconds, 900-43200) is set via the alias's optional `session_duration`. It is passed as `DurationSeconds` to `assume_role`, so a longer value means fewer MFA prompts: the cached credentials stay valid until they expire.
+
+```
+[my-awesome-project]
+arn = arn:aws:iam::xxxx:role/AdminRole
+profile = smcdk-prejp
+session_duration = 43200
+```
+
+When omitted, the role's default (1 hour) applies. The value must not exceed the role's *Maximum session duration* in IAM, and it cannot exceed 1 hour when the credentials used to assume the role are themselves temporary (role chaining). When STS rejects it, `asmr` retries without `session_duration` and tells you so, **except** when an MFA code was just consumed: a TOTP code cannot be reused, so `asmr` fails with guidance instead of asking you for another code. A change to `session_duration` only takes effect after the currently cached credentials expire (or after `asmr --clear`).
+
 ## Web Login (AWS Management Console)
 
 The companion command `asmr-login` opens the **AWS Management Console** in your browser as the assumed role, using the [AWS federation endpoint](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_enable-console-custom-url.html). This is handy when you want a *browser* session for a role you normally only use from the CLI.
@@ -120,14 +153,6 @@ Then `asmr-login --name=my-awesome-project` opens the console home of `ap-northe
 
 ### Session duration
 
-The console session duration (seconds, 900-43200) is set via the alias's optional `session_duration`. When omitted, it defaults to 43200 (12h).
+The console session duration is the alias's `session_duration` described above; it is sent as `SessionDuration` to the federation endpoint as well. When omitted, `asmr-login` requests 43200 (12h).
 
-```
-[my-awesome-project]
-arn = arn:aws:iam::xxxx:role/AdminRole
-profile = smcdk-prejp
-region = ap-northeast-1
-session_duration = 3600
-```
-
-Note: the requested duration must be **less than the assumed role's maximum session duration** (1 hour by default). When the federation endpoint rejects it (e.g. the role's max is shorter, or you reached the role via role chaining), `asmr-login` automatically retries *without* it, falling back to the lifetime of the temporary credentials. To get a full 12-hour console session, raise the role's *Maximum session duration* in IAM accordingly.
+Note: the requested duration must be **less than the assumed role's maximum session duration** (1 hour by default). When the federation endpoint rejects it (e.g. the role's max is shorter, or you reached the role via role chaining), `asmr-login` automatically retries *without* it, falling back to the lifetime of the temporary credentials. To get a full 12-hour console session, raise the role's *Maximum session duration* in IAM and set `session_duration = 43200`.

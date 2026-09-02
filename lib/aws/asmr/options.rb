@@ -24,6 +24,7 @@ module Aws::ASMR
           You can use ALIAS to shortcut name input by setting it at #{Aws::ASMR::ROOT}/alias
 
           Usage: asmr [options] [command] [arg...]
+                 asmr local [NAME|--unset]   Pin NAME (alias or ARN) to the current directory
         EOS
 
         opts.on("-nNAME", "--name=NAME", "Name to perform assume role with ARN or ALIAS") do |name|

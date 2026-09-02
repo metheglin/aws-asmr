@@ -34,4 +34,5 @@ end
 
 require 'aws/asmr/cache'
 require 'aws/asmr/alias'
+require 'aws/asmr/local'
 require 'aws/asmr/web_login'
