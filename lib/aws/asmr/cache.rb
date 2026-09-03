@@ -52,12 +52,18 @@ module Aws
         end
       end
 
-      def shell_variables
+      # Environment for a process running as the assumed role, ready for
+      # Kernel#exec / Kernel#spawn.
+      def environment
         {
-          AWS_ACCESS_KEY_ID: access_key_id,
-          AWS_SECRET_ACCESS_KEY: secret_access_key,
-          AWS_SESSION_TOKEN: session_token,
-        }.map{|k,v| "#{k}=#{v}"}
+          "AWS_ACCESS_KEY_ID" => access_key_id,
+          "AWS_SECRET_ACCESS_KEY" => secret_access_key,
+          "AWS_SESSION_TOKEN" => session_token,
+        }
+      end
+
+      def shell_variables
+        environment.map{|k,v| "#{k}=#{v}"}
       end
     end
   end

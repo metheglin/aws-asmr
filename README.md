@@ -33,12 +33,14 @@ Of course you can set `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` respectively 
 AWS_ACCESS_KEY_ID=xxxx AWS_SECRET_ACCESS_KEY=yyyy asmr --name=arn:aws:iam::0000:role/AwesomeRole aws sts get-caller-identity
 ```
 
-To specify ARN (or alias name of assumed role), you MUST set `name` option with a form like `--name=<arn>` NOT a form like `--name <arn>`. For short version, `-n<arn>` works, `-n <arn>` doesn't. You must be wasting time for this pitfall, sorry!  
-This is due to a development circumstance. This tool is supposed to run 2 commands. One is assume_role, and the other is subsequential(this is main though) command. To safely separate options for assume_role and subsequential commands, all components of the `asmr` args must be start with `-`. Curse my programming ability!
+To specify ARN (or alias name of assumed role), set the `name` option in any of the usual forms. Option parsing stops at the first argument that is not an option (or at a literal `--`), and everything from there on is the subsequential command, including its own options such as `--filter`.
 
 ```
 asmr --name=arn:aws:iam::0000:role/AwesomeRole
+asmr --name arn:aws:iam::0000:role/AwesomeRole
 asmr -narn:aws:iam::0000:role/AwesomeRole
+asmr -n arn:aws:iam::0000:role/AwesomeRole
+asmr -n arn:aws:iam::0000:role/AwesomeRole -- aws sts get-caller-identity
 ```
 
 Of course you can set options for subsequential command.
@@ -47,10 +49,13 @@ Of course you can set options for subsequential command.
 asmr --name=arn:aws:iam::0000:role/AwesomeRole aws ec2 describe-instances --filter '[{"Name":"instance-state-name","Values":["stopped"]}]'
 ```
 
-Unfortunatelly you need quote and appropriate escape to run piped command as subsequential.
+When the subsequential command is given as several arguments, it is executed directly (no shell in between): each argument reaches the command exactly as your shell handed it to `asmr`, so quotes, spaces and `$` in arguments need no extra escaping. Note that your shell still interprets `|`, `&&` and redirects *before* `asmr` runs, so in `asmr aws s3 ls | grep foo` only `aws s3 ls` gets the credentials (which is usually what you want).
+
+To run a whole pipeline as the assumed role, pass it as a single argument; a single argument is run through `sh`, so pipes, redirects and variable expansion work inside it.
 
 ```
 asmr --name=arn:aws:iam::0000:role/AwesomeRole "aws sts get-caller-identity | grep Arn"
+asmr --name=arn:aws:iam::0000:role/AwesomeRole 'echo $AWS_ACCESS_KEY_ID'
 ```
 
 Without subsequential command, it just prints environment variables for assume_role.

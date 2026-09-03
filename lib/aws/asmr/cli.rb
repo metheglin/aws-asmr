@@ -20,9 +20,8 @@ module Aws
       # resolved alias is nil when an ARN was given directly. Top-level errors
       # are reported here (with a backtrace under --verbose) and exit non-zero.
       def main(argv)
-        asmr_args, command_args = Options.partition(argv)
+        options, command_args = Options.parse(argv)
         Local.run(command_args.drop(1)) if command_args.first == "local"
-        options = Options.parse(asmr_args)
 
         if options[:version]
           require "aws/asmr/version"

@@ -3,27 +3,23 @@ require "aws/asmr"
 
 module Aws::ASMR
   module Options
-    def partition(args)
-      _idx, asmr_args, command_args = args.reduce([1, [], []]) do |acc,i|
-        idx, _, _ = acc
-        unless i.start_with?('-')
-          idx = 2
-          acc[0] = idx
-        end
-        acc[idx] << i
-        acc
-      end
-      [asmr_args, command_args]
-    end
-
-    def parse(args)
+    # Parses asmr's own options from the head of argv and returns
+    # [options, command_args]. Parsing stops at the first non-option argument
+    # (or after a literal "--"), so anything from there on -- including
+    # arguments like --filter that start with "-" -- belongs to the command:
+    #
+    #   asmr --name=foo aws ec2 describe-instances --filter '...'
+    #   asmr --name foo aws sts get-caller-identity
+    #   asmr -n foo -- aws sts get-caller-identity
+    def parse(argv)
       options = {}
+      command_args = argv.dup
       OptionParser.new do |opts|
         # opts.banner = "Usage: asmr [options]"
         opts.banner = <<~EOS
           You can use ALIAS to shortcut name input by setting it at #{Aws::ASMR::ROOT}/alias
 
-          Usage: asmr [options] [command] [arg...]
+          Usage: asmr [options] [--] [command] [arg...]
                  asmr local [NAME|--unset]   Pin NAME (alias or ARN) to the current directory
         EOS
 
@@ -43,14 +39,11 @@ module Aws::ASMR
         end
         opts.on("--clear", "Clear cache") do
           options[:clear] = true
-          # require "aws/asmr/version"
-          # puts Aws::ASMR::VERSION
-          # exit(0)
         end
-      end.parse(args)
-      options
+      end.order!(command_args)
+      [options, command_args]
     end
 
-    module_function :partition, :parse
+    module_function :parse
   end
 end

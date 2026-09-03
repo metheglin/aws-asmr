@@ -2,28 +2,26 @@
 
 require "aws/asmr/cli"
 
-def run(command, shell_variables=[])
+# Runs command with the temporary credentials in its environment. The
+# credentials never go through a shell command line, so they are not visible
+# in `ps` output or shell history of the child.
+#
+#   asmr                                  # no command: print the variables
+#   asmr "aws sts get-caller-identity | grep Arn"
+#       # one argument: a shell command line, so pipes and redirects work
+#   asmr aws ec2 describe-instances --filter '[{"Name":"instance-state-name","Values":["stopped"]}]'
+#       # several arguments: executed directly, each argument passed verbatim
+def run(cache, command)
   if command.empty?
-    exec("echo \"#{shell_variables.join($/)}\"")
+    puts cache.shell_variables
   else
-    command = if command.length == 1
-      # Ex: asmr "aws sts get-caller-identity | grep Arn"
-      command
-    else
-      # Ex: asmr aws ec2 describe-instances --filter '[{"Name":"instance-state-name","Values":["stopped"]}]'
-      command.map{|plain|
-        if plain.match?(/[\"\'\ ]/)
-          quoted = plain.gsub("'"){"\\'"}
-          "'#{quoted}'"
-        else
-          plain
-        end
-      }
-    end
-    exec([*shell_variables, *command].join(' '))
+    exec(cache.environment, *command)
   end
+rescue Errno::ENOENT
+  STDERR.puts "asmr: command not found: #{command.first}"
+  exit(127)
 end
 
 Aws::ASMR::CLI.main(ARGV) do |cache, command_args, _options|
-  run(command_args, cache.shell_variables)
+  run(cache, command_args)
 end
